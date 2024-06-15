@@ -9,19 +9,43 @@ async function startServer() {
   const app = express();
   const server = new ApolloServer({
     typeDefs: `
-        type Todo{
-          id:ID!,
-          title: String!,
-          completed:Boolean
+        type User {
+          id: ID!
+          name: String!
+          username: String!
+          email: String!
+          phone: String!
+          website: String!
         }
-        type Query{
-            getTodos:[Todo]
+        type Todo {
+          id: ID!
+          title: String!
+          completed: Boolean
+          user: User
+        }
+        type Query {
+            getTodos: [Todo]
+            getAllUsers: [User]
+            getUser(id: ID!): User
         }
     `,
     resolvers: {
+      Todo: {
+        user: async (todo) =>
+          (
+            await axios.get(
+              `https://jsonplaceholder.typicode.com/users/${todo.userId}`
+            )
+          ).data,
+      },
       Query: {
         getTodos: async () =>
           (await axios.get("https://jsonplaceholder.typicode.com/todos")).data,
+        getAllUsers: async () =>
+          (await axios.get("https://jsonplaceholder.typicode.com/users")).data,
+        getUser: async (parent, { id }) =>
+          (await axios.get(`https://jsonplaceholder.typicode.com/users/${id}`))
+            .data,
       },
     },
   });
@@ -36,6 +60,3 @@ async function startServer() {
 }
 
 startServer();
-
-//Anything to be fetched from graphQL , we use query
-// ?anything to post/give to graphql use mutation
